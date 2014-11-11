@@ -24,6 +24,8 @@ struct Connection {
   struct Database *db;
 };
 
+struct Connection *conn;
+
 void die(const char *message)
 {
   if (errno) {
@@ -40,15 +42,15 @@ void Address_print(struct Address *addr)
   printf("%d %s %s %c\n", addr->id, addr->name, addr->email, addr->sex);
 }
 
-void Database_load(struct Connection *conn)
+void Database_load()
 {
   int rc = fread(conn->db, sizeof(struct Database), 1, conn->file);
   if (rc != 1) die("load fail");
 }
 
-struct Connection *Database_open(const char *filename, char mode)
+void Database_open(const char *filename, char mode)
 {
-  struct Connection *conn = malloc(sizeof(struct Connection));
+  conn = malloc(sizeof(struct Connection));
   if (!conn) die("mem error");
 
   conn->db = malloc(sizeof(struct Database));
@@ -60,15 +62,13 @@ struct Connection *Database_open(const char *filename, char mode)
     conn->file = fopen(filename, "r+");
 
     if (conn->file) {
-      Database_load(conn);
+      Database_load();
     }
   }
   if (!conn->file) die("failed to open file");
-
-  return conn;
 }
 
-void Database_close(struct Connection *conn)
+void Database_close()
 {
   if (conn) {
     if (conn->file) fclose(conn->file);
@@ -77,7 +77,7 @@ void Database_close(struct Connection *conn)
   }
 }
 
-void Database_write(struct Connection *conn)
+void Database_write()
 {
   rewind(conn->file);
 
@@ -88,7 +88,7 @@ void Database_write(struct Connection *conn)
   if (rc == -1) die("failed to flush");
 }
 
-void Database_create(struct Connection *conn)
+void Database_create()
 {
   int i;
 
@@ -100,8 +100,7 @@ void Database_create(struct Connection *conn)
   }
 }
 
-void Database_set(struct Connection *conn,
-    int id, const char *name, const char *email, const char sex)
+void Database_set(int id, const char *name, const char *email, const char sex)
 {
   struct Address *addr = &conn->db->rows[id];
   if (addr->set) die("row already set");
@@ -117,7 +116,7 @@ void Database_set(struct Connection *conn,
   if (!res) die("email copy failed");
 }
 
-void Database_get(struct Connection *conn, int id)
+void Database_get(id)
 {
   struct Address *addr = &conn->db->rows[id];
 
@@ -128,13 +127,13 @@ void Database_get(struct Connection *conn, int id)
   }
 }
 
-void Database_delete(struct Connection *conn, int id)
+void Database_delete(int id)
 {
   struct Address addr = {.id = id, .set = 0};
   conn->db->rows[id] = addr;
 }
 
-void Database_list(struct Connection *conn)
+void Database_list()
 {
   int i;
   struct Database *db = conn->db;
@@ -148,7 +147,7 @@ void Database_list(struct Connection *conn)
   }
 }
 
-void Database_find_name(struct Connection *conn, char *name)
+void Database_find_name(char *name)
 {
   int i;
   struct Database *db = conn->db;
@@ -167,7 +166,7 @@ void Database_find_name(struct Connection *conn, char *name)
   printf("not found %s\n", name);
 }
 
-void Database_find_sex(struct Connection *conn, char sex)
+void Database_find_sex(char sex)
 {
   int i;
   int found = 0;
@@ -197,48 +196,48 @@ int main(int argc, char *argv[])
 
   char *filename = argv[1];
   char action = argv[2][0];
-  struct Connection *conn = Database_open(filename, action);
+  Database_open(filename, action);
   int id = 0;
 
   if (argc > 3) id = atoi(argv[3]);
   if (id >= MAX_ROWS) die("access to high of row");
   switch (action) {
     case 'c':
-      Database_create(conn);
-      Database_write(conn);
+      Database_create();
+      Database_write();
       break;
 
     case 'g':
       if(argc != 4) die("Need an id to get");
 
-      Database_get(conn, id);
+      Database_get(id);
       break;
 
     case 's':
       if (argc != 7) die("Need id, name, email, sex to set");
 
-      Database_set(conn, id, argv[4], argv[5], argv[6][0]);
-      Database_write(conn);
+      Database_set(id, argv[4], argv[5], argv[6][0]);
+      Database_write();
       break;
 
     case 'd':
       if(argc != 4) die("Need id to delete");
 
-      Database_delete(conn, id);
-      Database_write(conn);
+      Database_delete(id);
+      Database_write();
       break;
 
     case 'l':
-      Database_list(conn);
+      Database_list();
       break;
 
     case 'f':
       if(argc < 4) die("Need an name or sex to search");
       char search = argv[3][0];
       if (search == 'n') {
-        Database_find_name(conn, argv[4]);
+        Database_find_name(argv[4]);
       } else if (search == 's') {
-        Database_find_sex(conn, argv[4][0]);
+        Database_find_sex(argv[4][0]);
       }
       break;
 
@@ -246,7 +245,7 @@ int main(int argc, char *argv[])
       die("Invalid action, only: c=create, g=get, s=set, d=del, l=list");
 
   }
-  Database_close(conn);
+  Database_close();
 
   return 0;
 }
