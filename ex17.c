@@ -12,6 +12,7 @@ struct Address {
   int set;
   char name[MAX_DATA];
   char email[MAX_DATA];
+  char sex;
 };
 
 struct Database {
@@ -36,7 +37,7 @@ void die(const char *message)
 
 void Address_print(struct Address *addr)
 {
-  printf("%d %s %s\n", addr->id, addr->name, addr->email);
+  printf("%d %s %s %c\n", addr->id, addr->name, addr->email, addr->sex);
 }
 
 void Database_load(struct Connection *conn)
@@ -100,12 +101,14 @@ void Database_create(struct Connection *conn)
 }
 
 void Database_set(struct Connection *conn,
-    int id, const char *name, const char *email)
+    int id, const char *name, const char *email, const char sex)
 {
   struct Address *addr = &conn->db->rows[id];
   if (addr->set) die("row already set");
 
   addr->set = 1;
+
+  addr->sex = sex;
 
   char *res = strncpy(addr->name, name, MAX_DATA);
   if (!res) die("name copy failed");
@@ -145,7 +148,7 @@ void Database_list(struct Connection *conn)
   }
 }
 
-void Database_find(struct Connection *conn, char *name)
+void Database_find_name(struct Connection *conn, char *name)
 {
   int i;
   struct Database *db = conn->db;
@@ -162,6 +165,30 @@ void Database_find(struct Connection *conn, char *name)
     }
   }
   printf("not found %s\n", name);
+}
+
+void Database_find_sex(struct Connection *conn, char sex)
+{
+  int i;
+  int found = 0;
+  struct Database *db = conn->db;
+
+  for (i = 0; i < MAX_ROWS; i++) {
+    struct Address *cur = &db->rows[i];
+
+    if (cur->set) {
+      if (cur->sex == sex) {
+        found++;
+        printf("found: ");
+        Address_print(cur);
+      }
+    }
+  }
+  if (found > 0) {
+    printf("records found: %d\n", found);
+  } else {
+    printf("records not found");
+  }
 }
 
 int main(int argc, char *argv[])
@@ -188,9 +215,9 @@ int main(int argc, char *argv[])
       break;
 
     case 's':
-      if (argc != 6) die("Need id, name, email to set");
+      if (argc != 7) die("Need id, name, email, sex to set");
 
-      Database_set(conn, id, argv[4], argv[5]);
+      Database_set(conn, id, argv[4], argv[5], argv[6][0]);
       Database_write(conn);
       break;
 
@@ -206,8 +233,13 @@ int main(int argc, char *argv[])
       break;
 
     case 'f':
-      if(argc != 5) die("Need an name to search");
-      Database_find(conn, argv[4]);
+      if(argc < 4) die("Need an name or sex to search");
+      char search = argv[3][0];
+      if (search == 'n') {
+        Database_find_name(conn, argv[4]);
+      } else if (search == 's') {
+        Database_find_sex(conn, argv[4][0]);
+      }
       break;
 
     default:
