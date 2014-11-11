@@ -10,12 +10,14 @@
 struct Address {
   int id;
   int set;
-  char name[MAX_DATA];
-  char email[MAX_DATA];
+  char *name;
+  char *email;
 };
 
 struct Database {
-  struct Address rows[MAX_ROWS];
+  struct Address rows[0];
+  int max_data;
+  int max_rows;
 };
 
 struct Connection {
@@ -43,14 +45,17 @@ void Database_load(struct Connection *conn)
 {
   int rc = fread(conn->db, sizeof(struct Database), 1, conn->file);
   if (rc != 1) die("load fail");
+
+  conn->db->rows = malloc(sizeof(struct Address) * conn->db->max_rows);
 }
 
-struct Connection *Database_open(const char *filename, char mode)
+struct Connection *Database_open(const char *filename, char mode, int max_rows)
 {
   struct Connection *conn = malloc(sizeof(struct Connection));
   if (!conn) die("mem error");
 
-  conn->db = malloc(sizeof(struct Database));
+  conn->db = malloc(sizeof(struct Database) +
+      (sizeof(struct Address) * max_rows));
   if (!conn->db) die("mem error");
 
   if (mode == 'c') {
@@ -71,6 +76,7 @@ void Database_close(struct Connection *conn)
 {
   if (conn) {
     if (conn->file) fclose(conn->file);
+    if (conn->db) free(conn->db->rows);
     if (conn->db) free(conn->db);
     free(conn);
   }
@@ -87,11 +93,16 @@ void Database_write(struct Connection *conn)
   if (rc == -1) die("failed to flush");
 }
 
-void Database_create(struct Connection *conn)
+void Database_create(struct Connection *conn, int max_data, int max_rows)
 {
   int i;
 
-  for (i = 0; i < MAX_ROWS; i++) {
+  conn->db->max_data = max_data;
+  conn->db->max_rows = max_rows;
+
+  conn->db->rows = malloc(sizeof(struct Address) * max_rows);
+
+  for (i = 0; i < max_rows; i++) {
     // make a prototype.
     struct Address addr = {.id = i, .set = 0};
     // assign it.
@@ -102,20 +113,23 @@ void Database_create(struct Connection *conn)
 void Database_set(struct Connection *conn,
     int id, const char *name, const char *email)
 {
+  if (id > conn->db->max_rows) die("row access too high");
   struct Address *addr = &conn->db->rows[id];
   if (addr->set) die("row already set");
 
   addr->set = 1;
 
-  char *res = strncpy(addr->name, name, MAX_DATA);
+  char *res = strncpy(addr->name, name, conn->db->max_data);
   if (!res) die("name copy failed");
 
-  res = strncpy(addr->email, email, MAX_DATA);
+  addr->email[sizeof(addr->email)-1] = '\0';
+  res = strncpy(addr->email, email, conn->db->max_data);
   if (!res) die("email copy failed");
 }
 
 void Database_get(struct Connection *conn, int id)
 {
+  if (id > conn->db->max_rows) die("row access too high");
   struct Address *addr = &conn->db->rows[id];
 
   if (addr->set) {
@@ -127,6 +141,7 @@ void Database_get(struct Connection *conn, int id)
 
 void Database_delete(struct Connection *conn, int id)
 {
+  if (id > conn->db->max_rows) die("row access too high");
   struct Address addr = {.id = id, .set = 0};
   conn->db->rows[id] = addr;
 }
@@ -136,7 +151,7 @@ void Database_list(struct Connection *conn)
   int i;
   struct Database *db = conn->db;
 
-  for (i = 0; i < MAX_ROWS; i++) {
+  for (i = 0; i < db->max_rows; i++) {
     struct Address *cur = &db->rows[i];
 
     if (cur->set) {
@@ -155,10 +170,10 @@ int main(int argc, char *argv[])
   int id = 0;
 
   if (argc > 3) id = atoi(argv[3]);
-  if (id >= MAX_ROWS) die("access to high of row");
+  // if (id >= MAX_ROWS) die("access to high of row");
   switch (action) {
     case 'c':
-      Database_create(conn);
+      Database_create(conn, atoi(argv[3]), atoi(argv[4]));
       Database_write(conn);
       break;
 
