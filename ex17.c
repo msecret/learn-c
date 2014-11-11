@@ -145,6 +145,25 @@ void Database_list(struct Connection *conn)
   }
 }
 
+void Database_find(struct Connection *conn, char *name)
+{
+  int i;
+  struct Database *db = conn->db;
+
+  for (i = 0; i < MAX_ROWS; i++) {
+    struct Address *cur = &db->rows[i];
+
+    if (cur->set) {
+      if (strcmp(cur->name, name) == 0) {
+        printf("found: ");
+        Address_print(cur);
+        return;
+      }
+    }
+  }
+  printf("not found %s\n", name);
+}
+
 int main(int argc, char *argv[])
 {
   if (argc < 3) die("USAGE: ex17 <dbfile> <action> [action params]");
@@ -184,6 +203,11 @@ int main(int argc, char *argv[])
 
     case 'l':
       Database_list(conn);
+      break;
+
+    case 'f':
+      if(argc != 5) die("Need an name to search");
+      Database_find(conn, argv[4]);
       break;
 
     default:
