@@ -34,7 +34,7 @@ struct Map {
   Object proto;
   Room *start;
   Room *location;
-}
+};
 
 typedef struct Map Map;
 

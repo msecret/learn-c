@@ -5,7 +5,7 @@
 
 #include "object.h"
 
-void Object_init(void *self)
+int Object_init(void *self)
 {
   return 1;
 }
@@ -16,13 +16,14 @@ void Object_destroy(void *self)
 
   if (obj) {
     if (obj->description) free(obj->description);
-    free(obj)
+    free(obj);
   }
 }
 
 void Object_describe(void *self)
 {
   Object *obj = self;
+  assert(obj->description != NULL);
   printf("%s.\n", obj->description);
 }
 
@@ -47,14 +48,17 @@ void *Object_new(size_t size, Object proto, char *description)
   if(!proto.move) proto.move = Object_move;
 
   Object *el = calloc(1, size);
+  assert(el != NULL);
   *el = proto;
 
+  assert(description != NULL);
   el->description = strdup(description);
 
   if (!el->init(el)) {
-    el->destory(el);
+    el->destroy(el);
     return NULL;
   } else {
+    assert(el != NULL)
     return el;
   }
 }

@@ -2,10 +2,10 @@
 #define _object_h
 
 typedef enum {
-  NORTH, SOUTH, EAST WEST
+  NORTH, SOUTH, EAST, WEST
 } Direction;
 
-typdef struct {
+typedef struct {
   char *description;
   int (*init) (void *self);
   void (*describe)(void *self);
