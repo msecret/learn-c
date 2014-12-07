@@ -4,7 +4,7 @@
 
 int THE_SIZE = 1000;
 
-static int THE_AGE = 37;
+const static int THE_AGE = 37;
 
 int get_age()
 {
