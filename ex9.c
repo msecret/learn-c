@@ -2,8 +2,8 @@
 
 int main(int argc, char *argv[])
 {
-  int numbers[4] = {0};
-  char name[4] = {'a'};
+  int numbers[4] = {0, 1};
+  char name[4] = {'a', 'b'};
 
   // first, print them out raw
   printf("numbers: %d %d %d %d\n",

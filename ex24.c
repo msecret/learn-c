@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "dbg.h"
 
 #define MAX_DATA 100
@@ -34,9 +35,11 @@ int main(int argc, char *argv[])
   in = fgets(you.last_name, MAX_DATA - 1, stdin);
   check(in != NULL, "failed to ready l name");
 
+  char buffer[32];
   printf("how old you? ");
-  int rc = fscanf(stdin, "%d", &you.age);
-  check(rc > 0, "age needs a number");
+  in = fgets(buffer, MAX_DATA, stdin);
+  check(in != NULL, "failed to ready l name");
+  you.age = atoi(buffer);
 
   printf("what yo eyes?\n");
   for (i = 0; i <= OTHER_EYES; i++) {
@@ -45,11 +48,11 @@ int main(int argc, char *argv[])
   printf("> ");
 
   int eyes = -1;
+  int rc;
   rc = fscanf(stdin, "%d", &eyes);
   check(rc > 0, "eyes needs number");
 
   you.eyes = eyes - 1;
-  check(you.eyes <= OTHER_EYES && you.eyes >= 0, "eyes too big");
 
   printf("you rich? ");
   rc = fscanf(stdin, "%f", &you.income);
