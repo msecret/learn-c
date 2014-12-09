@@ -37,3 +37,25 @@ error:
   if (data) bdestroy(data);
   return NULL;
 }
+
+int DB_update(const char *url)
+{
+  if (DB_read(url)) {
+    log_info("Already inserted record skipping: %s", url);
+  }
+
+  FILE *db = DB_open(DB_FILE, "a+");
+  check(db, "Failed to open db: %s", DB_FILE);
+
+  bstring line = bfromcstr(url);
+  //check(data, "Url invalid string %s", url);
+  bconchar(line, '\n');
+  int rc = fwrite(line->data, blength(line), 1, db);
+  check(rc == 1, "Failed to append to the db.");
+
+  return 0;
+
+error:
+  if(db) DB_close(db);
+  return -1;
+}
