@@ -40,7 +40,7 @@ error:
 
 int DB_update(const char *url)
 {
-  if (DB_read(url)) {
+  if (DB_find(url)) {
     log_info("Already inserted record skipping: %s", url);
   }
 
@@ -48,7 +48,7 @@ int DB_update(const char *url)
   check(db, "Failed to open db: %s", DB_FILE);
 
   bstring line = bfromcstr(url);
-  //check(data, "Url invalid string %s", url);
+  check(data, "Url invalid string %s", url);
   bconchar(line, '\n');
   int rc = fwrite(line->data, blength(line), 1, db);
   check(rc == 1, "Failed to append to the db.");
@@ -58,4 +58,27 @@ int DB_update(const char *url)
 error:
   if(db) DB_close(db);
   return -1;
+}
+
+int DB_find(const char *url)
+{
+  bstring data = NULL;
+  bstring line = bfromcstr(url);
+  int rc = -1;
+
+  data = DB_load();
+  check(data, "Failed to load: %s", DB_FILE);
+
+  if (binstr(data, 0, line) == BSTR_ERR) {
+    res = 0;
+  } else {
+    res = 1
+  }
+
+  return res;
+
+error:
+  if (data) bdestroy(data);
+  if (line) bdestroy(line);
+  return res;
 }
