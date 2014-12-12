@@ -27,9 +27,7 @@ static bstring DB_load()
   data = bread((bNread)fread, db);
   check(data, "Failed to read db from file: %s", DB_FILE);
 
-  rc = DB_close(db);
-  check(rc, "Failed to close db from file: %s", DB_FILE);
-
+  DB_close(db);
   return data;
 
 error:
@@ -48,7 +46,6 @@ int DB_update(const char *url)
   check(db, "Failed to open db: %s", DB_FILE);
 
   bstring line = bfromcstr(url);
-  check(data, "Url invalid string %s", url);
   bconchar(line, '\n');
   int rc = fwrite(line->data, blength(line), 1, db);
   check(rc == 1, "Failed to append to the db.");
@@ -64,7 +61,7 @@ int DB_find(const char *url)
 {
   bstring data = NULL;
   bstring line = bfromcstr(url);
-  int rc = -1;
+  int res = -1;
 
   data = DB_load();
   check(data, "Failed to load: %s", DB_FILE);
@@ -72,7 +69,7 @@ int DB_find(const char *url)
   if (binstr(data, 0, line) == BSTR_ERR) {
     res = 0;
   } else {
-    res = 1
+    res = 1;
   }
 
   return res;
@@ -104,6 +101,10 @@ int DB_init()
 
   apr_pool_destroy(p);
   return 0;
+
+error:
+  apr_pool_destroy(p);
+  return -1;
 }
 
 int DB_list()
