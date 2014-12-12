@@ -82,3 +82,16 @@ error:
   if (line) bdestroy(line);
   return res;
 }
+
+int DB_list()
+{
+  bstring data = DB_load();
+  check(data, "Failed to load: %s", DB_FILE);
+
+  printf("%s", bdata(data));
+  bdestroy(data);
+  return 0;
+
+error:
+  return -1;
+}
