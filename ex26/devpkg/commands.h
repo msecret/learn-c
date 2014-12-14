@@ -16,7 +16,7 @@
 enum CommandType {
   COMMAND_NONE, COMMAND_INSTALL, COMMAND_LIST, COMMAND_FETCH,
   COMMAND_INIT, COMMAND_BUILD
-}
+};
 
 // Why does call have responsibility to pass in pool?
 int Command_fetch(apr_pool_t *p, const char *url, int fetch_only);

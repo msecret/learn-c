@@ -10,7 +10,7 @@
 
 int Command_depends(apr_pool_t *p, const char *path)
 {
-  FILE *in = null;
+  FILE *in = NULL;
   bstring line = NULL;
 
   in = fopen(path, "r");
@@ -43,7 +43,7 @@ int Command_fetch(apr_pool_t *p, const char *url, int fetch_only)
   apr_status_t rv = apr_uri_parse(p, url, &info);
   check(rv == APR_SUCCESS, "Failed to parse url: %s", url);
 
-  if (apr_fnmatch(GIT_PATH, info.path, 0) == APR_SUCCESS) {
+  if (apr_fnmatch(GIT_PAT, info.path, 0) == APR_SUCCESS) {
     rc = Shell_exec(GIT_SH, "URL", url, NULL);
     check(rc == 0, "git failed");
   } else if (apr_fnmatch(DEPEND_PAT, info.path, 0) == APR_SUCCESS) {
@@ -130,13 +130,13 @@ error:
   return -1;
 }
 
-Command_install(apr_pool_t *p, const char *url, const char *configure_opts,
+int Command_install(apr_pool_t *p, const char *url, const char *configure_opts,
     const char *make_opts, const char *install_opts)
 {
   int rc = 0;
   check(Shell_exec(CLEANUP_SH, NULL) == 0, "Failed to cleanup before building.");
 
-  rc = DB_FIND(url);
+  rc = DB_find(url);
   check(rc != -1, "Error checking the install db");
 
   if (rc == 1) {

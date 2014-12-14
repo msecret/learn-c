@@ -23,7 +23,7 @@ int Shell_exec(Shell template, ...)
        key != NULL;
        key = va_arg(argp, const char *))
   {
-    j += 1;
+    a += 1;
     arg = va_arg(argp, const char *);
 
     for (i = 0; template.args[i] != NULL; i++) {
@@ -34,7 +34,7 @@ int Shell_exec(Shell template, ...)
     }
   }
 
-  check(j == template.argc, "Did not replace correct number of args");
+  check(a == template.argc, "Did not replace correct number of args");
 
   rc = Shell_run(p, &template);
   apr_pool_destroy(p);
