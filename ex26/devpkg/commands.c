@@ -129,3 +129,36 @@ int Command_build(apr_pool_t *p, const char *url, const char *configure_opts,
 error:
   return -1;
 }
+
+Command_install(apr_pool_t *p, const char *url, const char *configure_opts,
+    const char *make_opts, const char *install_opts)
+{
+  int rc = 0;
+  check(Shell_exec(CLEANUP_SH, NULL) == 0, "Failed to cleanup before building.");
+
+  rc = DB_FIND(url);
+  check(rc != -1, "Error checking the install db");
+
+  if (rc == 1) {
+    log_info("Package %s already installed", url);
+    return 0;
+  }
+
+  rc = Command_fetch(p, url, 0);
+
+  if (rc == 1) {
+    rc = Command_build(p, url, configure_opts, make_opts, install_opts);
+    check(rc == 0, "Failed to build %s", url);
+  } else if (rc == 0) {
+    log_info("Dependency installed %s", url);
+  } else {
+    sentinel("Install failed: %s", url);
+  }
+
+  Shell_exec(CLEANUP_SH, NULL);
+  return 0;
+
+error:
+  Shell_exec(CLEANUP_SH, NULL);
+  return -1;
+}
