@@ -11,6 +11,7 @@ int Shell_exec(Shell template, ...)
   const char *key = NULL;
   const char *arg = NULL;
   int i = 0;
+  int a = 0;
 
   rv = apr_pool_create(&p, NULL);
   // Why equals success?
@@ -22,6 +23,7 @@ int Shell_exec(Shell template, ...)
        key != NULL;
        key = va_arg(argp, const char *))
   {
+    j += 1;
     arg = va_arg(argp, const char *);
 
     for (i = 0; template.args[i] != NULL; i++) {
@@ -31,6 +33,8 @@ int Shell_exec(Shell template, ...)
       }
     }
   }
+
+  check(j == template.argc, "Did not replace correct number of args");
 
   rc = Shell_run(p, &template);
   apr_pool_destroy(p);
@@ -81,6 +85,7 @@ error:
 Shell CLEANUP_SH = {
   .exe = "rm",
   .dir = "/tmp",
+  .argc = 5,
   .args = {"rm", "-rf", "/tmp/pkg-build", "/tmp/pkg-src.tar.gz",
       "/tmp/pkg-src.tar.bz2", "/tmp/DEPENDS", NULL}
 };
@@ -88,12 +93,14 @@ Shell CLEANUP_SH = {
 Shell GIT_SH = {
   .dir = "/tmp",
   .exe = "git",
+  .argc = 3,
   .args = {"git", "clone", "URL", "pkg-build", NULL}
 };
 
 Shell TAR_SH = {
   .dir = "/tmp/pkg-build",
   .exe = "tar",
+  .argc = 4,
   .args = {"tar", "-xzf", "FILE", "--strip-components", "1", NULL}
 };
 
